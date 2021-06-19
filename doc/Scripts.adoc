@@ -1,0 +1,136 @@
+// CommonTasks YAML Reference: Scripts
+// ===================================
+
+:YmlCategory: Scripts
+
+
+[[dscyml_scripts, {YmlCategory}]]
+= DSC Resource 'Scripts'
+// didn't work in production: = DSC Resource '{YmlCategory}'
+
+
+[[dscyml_scripts_abstract]]
+.{YmlCategory} provides a mechanism to run PowerShell script blocks on a target node..
+
+// reference links as variables for using more than once
+:ref_xpsdesiredstateconfiguration_xscript:    https://github.com/dsccommunity/xPSDesiredStateConfiguration#xscript[xScript]
+
+
+[cols="1,3a" options="autowidth" caption=]
+|===
+| Source         | https://github.com/dsccommunity/CommonTasks/tree/dev/CommonTasks/DscResources/Scripts
+| DSC Resource   | https://github.com/dsccommunity/xPSDesiredStateConfiguration[xPSDesiredStateConfiguration]
+| Documentation  | {ref_xpsdesiredstateconfiguration_xscript} 
+                   
+|===
+
+
+.Attributes of category '{YmlCategory}'
+[cols="1,1,1,2a,1a" options="header"]
+|===
+| Parameter
+| Attribute
+| DataType
+| Description
+| Allowed Values
+
+| [[dscyml_scripts_items, {YmlCategory}/Items]]<<dscyml_scripts_items_details, Items>>
+| 
+| hashtable[]
+| The {ref_xpsdesiredstateconfiguration_xscript} DSC resource provides a mechanism to run PowerShell script blocks on a target node..
+|
+|===
+
+
+[[dscyml_scripts_items_details]]
+.Attributes of category '<<dscyml_scripts_items>>'
+[cols="1,1,1,2a,1a" options="header"]
+|===
+| Parameter
+| Attribute
+| DataType
+| Description
+| Allowed Values
+
+| Name
+| Key
+| String
+| Script Name
+|
+
+| Params
+|
+| Hashtable[]
+| Optional script paramters as Key-Value hashtable
+
+NOTE: You can access these parameters with the variable `$params` in your script blocks.
+|
+
+| GetScript
+|
+| String
+| A string that can be used to create a PowerShell script block that retrieves the current state of the resource.
+  This script block runs when the Get-DscConfiguration cmdlet is called. 
+  This script block should return a hash table containing one key named Result with a string value.
+
+NOTE: If the `GetScript` attribute is empty or missing a default script `@{ Result = 'N/A' }` is generated.
+|
+
+| SetScript
+|
+| String
+| A string that can be used to create a PowerShell script block that sets the resource to the desired state.
+  This script block runs conditionally when the Start-DscConfiguration cmdlet is called.
+  The TestScript script block will run first. 
+  If the TestScript block returns False, this script block will run.
+  If the TestScript block returns True, this script block will not run.
+  This script block should not return.
+
+NOTE: If the `SetScript` attribute is empty or missing a default script `Write-Verbose 'SetScript is not implemented.'` is generated 
+|
+
+| TestScript
+| Mandatory
+| String
+| A string that can be used to create a PowerShell script block that validates whether or not the resource is in the desired state.
+  This script block runs when the Start-DscConfiguration cmdlet is called or when the Test-DscConfiguration cmdlet is called.
+  This script block should return a boolean with True meaning that the resource is in the desired state and False meaning that the resource is not in the desired state.
+|
+
+| Credential
+|
+| PSCredential
+| The credential of the user account to run the script under if needed.
+|
+
+|===
+
+
+.Example
+[source, yaml]
+----
+Scripts:
+  Items:
+  - Name: JeaDiscovery.psd1
+    GetScript: |
+      @{
+        Result = (Get-Date)
+      }
+    TestScript: |
+      [bool](Get-Date)
+    SetScript: |
+      Get-Date
+
+  - Name: ParamTestScript
+    Params:
+      a: 1
+      b: Test
+      c:
+        - x: 1
+          y: 2
+          z: 3
+    TestScript: |
+      Write-Verbose 'Param a:   ' + $params.a
+      Write-Verbose 'Param c.x: ' + $params.c.x
+      [bool](Get-Date)
+----

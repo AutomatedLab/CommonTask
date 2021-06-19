@@ -96,9 +96,11 @@ configuration HyperV
 
             $netName         = $vmswitch.Name
             $netAddressSpace = $vmswitch.AddressSpace
+            $netIpAddress    = $vmswitch.IpAddress
             $netGateway      = $vmswitch.Gateway
 
             $vmSwitch.Remove('AddressSpace')
+            $vmSwitch.Remove('IpAddress')
             $vmSwitch.Remove('Gateway')
 
             if( $vmswitch.Type -eq 'NAT' )
@@ -108,35 +110,45 @@ configuration HyperV
                     throw "ERROR: Only one NAT switch is supported."
                 }
 
-                if( [string]::IsNullOrWhiteSpace($netAddressSpace) -or [string]::IsNullOrWhiteSpace($netGateway) )
+                if( [string]::IsNullOrWhiteSpace($netAddressSpace) -or [string]::IsNullOrWhiteSpace($netIpAddress) )
                 {
-                    throw "ERROR: A NAT switch requires the 'AddressSpace' and 'Gateway' attributes."
+                    throw "ERROR: A NAT switch requires the 'AddressSpace' and 'IpAddress' attribute."
                 }
 
                 $natSwitch     = $vmswitch.Name
                 $vmswitch.Type = 'Internal'
-             }
+            }
 
             $vmswitch.DependsOn = $dependsOnHostOS
             $executionName = $vmswitch.Name -replace '[().:\s]', '_'
             (Get-DscSplattedResource -ResourceName xVMSwitch -ExecutionName "vmswitch_$executionName" -Properties $vmswitch -NoInvoke).Invoke( $vmswitch )
 
-            # enable Net Adressspace and NAT switch
-            if( -not [string]::IsNullOrWhiteSpace($netAddressSpace) -or -not [string]::IsNullOrWhiteSpace($netGateway) )
+            # enable Net Adressspace, IpAddress and NAT switch
+            if( -not [string]::IsNullOrWhiteSpace($netIpAddress) )
             {
-                $prefixSelect = $netAddressSpace | Select-String '\d+\.\d+\.\d+\.\d+/(\d+)'
+                [int]$netPrefixLength = 24;
 
-                if( $null -eq $prefixSelect )
+                if( -not [string]::IsNullOrWhiteSpace($netAddressSpace) )
                 {
-                    throw "ERROR: Invalid format of attribute 'AddressSpace'."
+                    $prefixSelect = $netAddressSpace | Select-String '\d+\.\d+\.\d+\.\d+/(\d+)'
+
+                    if( $null -eq $prefixSelect )
+                    {
+                        throw "ERROR: Invalid format of attribute 'AddressSpace'."
+                    }
+
+                    $netPrefixLength = $prefixSelect.Matches.Groups[1].Value
                 }
 
-                if( -not ($netGateway -match '\d+\.\d+\.\d+\.\d+') )
+                if( -not ($netIpAddress -match '\d+\.\d+\.\d+\.\d+') )
+                {
+                    throw "ERROR: Invalid format of attribute 'IpAddress'."
+                }
+
+                if( -not [string]::IsNullOrWhiteSpace($netGateway) -and -not ($netGateway -match '\d+\.\d+\.\d+\.\d+') )
                 {
                     throw "ERROR: Invalid format of attribute 'Gateway'."
                 }
-
-                $netPrefixLength = $prefixSelect.Matches.Groups[1].Value
 
                 Script "vmnet_$executionName"
                 {
@@ -144,13 +156,21 @@ configuration HyperV
                     {
                         [boolean]$result = $true
                         $netAdapter = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { $_.Name -match $using:netName }                    
-                        $netIpAddr  = Get-NetIPAddress -IPAddress $using:netGateway -ErrorAction SilentlyContinue
-                        $netNat     = Get-NetNat -Name $using:netName -ErrorAction SilentlyContinue
+                        $netIpAddr  = Get-NetIPAddress -IPAddress $using:netIpAddress -ErrorAction SilentlyContinue
 
                         if( $null -eq $netAdapter )
                         {
                             $result = $false
                             Write-Verbose "NetAdapter containing switch name '$using:netName' not found."
+                        }
+                        elseif( -not [string]::IsNullOrWhiteSpace( $using:netGateway ) )
+                        {
+                            $netIpConfig = Get-NetIPConfiguration -InterfaceIndex $netAdapter.InterfaceIndex
+
+                            if( $null -eq $netIpConfig -or $netIpConfig.IPv4DefaultGateway -ne $using:netGateway )
+                            {
+                                Write-Verbose "NetAdapter '$using:netName' has not the expected default gateway ($using:netGateway)."
+                            }
                         }
 
                         if( $null -eq $netIpAddr -or
@@ -158,16 +178,20 @@ configuration HyperV
                             $netIpAddr.PrefixLength -ne $using:netPrefixLength )
                         {
                             $result = $false
-                            Write-Verbose "IP Address of gateway '$using:netGateway' not found or has not the expected configuration."
+                            Write-Verbose "NetAdapter '$using:netName' has not the expected IP configuration ($using:netIpAddress/$using:netPrefixLength)."
                         }
 
                         # check NAT switch
-                        if( $using:netName -eq $using:natSwitch -and
-                            ($null -eq $netNat -or
-                             $netNat.InternalIPInterfaceAddressPrefix -ne $using:netAddressSpace) )
+                        if( $using:netName -eq $using:natSwitch )
                         {
-                            $result = $false
-                            Write-Verbose "NetNAT '$using:netName' not found or has not the expected configuration."
+                            $netNat = Get-NetNat -Name $using:netName -ErrorAction SilentlyContinue
+
+                            if( ($null -eq $netNat -or
+                                $netNat.InternalIPInterfaceAddressPrefix -ne $using:netAddressSpace) )
+                            {
+                                $result = $false
+                                Write-Verbose "NetNAT '$using:netName' not found or has not the expected configuration."
+                            }
                         }
 
                         $result
@@ -184,10 +208,19 @@ configuration HyperV
                         }
 
                         # remove existing configuration
-                        Remove-NetIPAddress -IPAddress $using:netGateway -Confirm:$false -ErrorAction SilentlyContinue
+                        Remove-NetIPAddress -IPAddress $using:netIpAddress -Confirm:$false -ErrorAction SilentlyContinue
 
-                        Write-Verbose "Create gateway IP Address '$using:netGateway'..."
-                        New-NetIPAddress -IPAddress $using:netGateway -PrefixLength $using:netPrefixLength -InterfaceIndex $netAdapter.InterfaceIndex
+                        Write-Verbose "Create IP Address '$using:netIpAddress'..."
+                        $ipAddrParams = @{
+                            IPAddress      = $using:netIpAddress
+                            PrefixLength   = $using:netPrefixLength
+                            InterfaceIndex = $netAdapter.InterfaceIndex
+                        }
+                        if( -not [string]::IsNullOrWhiteSpace( $using:netGateway ) )
+                        {
+                            $ipAddrParams.DefaultGateway = $using:netGateway
+                        }
+                        New-NetIPAddress @ipAddrParams
 
                         if( $using:netName -eq $using:natSwitch )
                         {
@@ -750,6 +783,11 @@ configuration HyperV
 
                     $netAdapter.NetworkSetting = $netSetting
                 }
+                # elseif( $null -eq $netAdapter.IgnoreNetworkSetting )
+                # {
+                #     # if no network settings are specified -> enable IgnoreNetworkSetting as default
+                #     $netAdapter.IgnoreNetworkSetting = $true
+                # }
 
                 # extract additional attributed
                 $dhcpGuard   = $netAdapter.DhcpGuard

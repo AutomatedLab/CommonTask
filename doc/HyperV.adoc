@@ -154,14 +154,24 @@ NOTE: Only one NAT switch is supported on a Hyper-V host.
 | 
 | String
 | Address space of virtual network defined in the format '192.168.10.0/24'
+
+NOTE: Mandatory attribute for a NAT switch!
+|
+
+| IpAddress
+| 
+| String
+| The desired IP address of the network adapter which is connected to the Hyper-V switch. 
+
+NOTE: Not applicable for `Private` switches! 
+
+NOTE: Mandatory attribute for a NAT switch and is used as default gateway for the virtual network.
 |
 
 | Gateway
 |
 | String
-| The default gateway for the virtual network
-
-NOTE: Mandatory attribute for a NAT switch!
+| The desired default gateway address.
 |
 
 | Ensure
@@ -410,10 +420,22 @@ The first entry will be the OS disk (C:\).
 | MAC-Address of the network adapter
 |
 
+// | IgnoreNetworkSetting
+// |
+// | Boolean
+// | Specifies whether the IpAddress information for the network adapter is set or ignored
+// | - *True* (default)
+//   - False
+
 | [[dscyml_hyperv_vmmachines_networkadapters_networksetting, {YmlCategory}/VMMachines/NetworkAdapters/NetworkSetting]]<<dscyml_hyperv_vmmachines_networkadapters_networksetting_details, NetworkSetting>>
 |
 | Hashtable
 | Network settings
+
+// NOTE: If `IgnoreNetworkSetting` is set to `True` the network settings are ignored.
+
+// IMPORTANT: If network settings are not specified and parameter `IgnoreNetworkSetting` is set to `False` DHCP will be enabled on the network adapter.
+IMPORTANT: If network settings are not specified DHCP will be enabled on the network adapter.
 |
 
 | VlanId
@@ -645,7 +667,8 @@ HyperV:
 
     - Name: VMSwitchNat
       Type: NAT
-      NatAddressPrefix: 192.168.0
+      AddressSpace: 192.168.0.0/24
+      IpAddress: 192.168.0.1
 
   VMMachines:
     - Name: XXXADC

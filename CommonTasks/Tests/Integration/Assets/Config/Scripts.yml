@@ -1,5 +1,29 @@
 Items:
-  - Name: JeaDiscovery.psd1
+  - Name: StandardScript
+    GetScript: |
+      @{
+        Result = (Get-Date)
+      }
+    TestScript: |
+      [bool(Get-Date)
+    SetScript: |
+      Get-Date
+
+  - Name: MinScript
+    TestScript: |
+      [bool(Get-Date)
+
+  - Name: ParamScript
+    Params:
+      a: 1
+      b: Test
+      c:
+        - x: 1
+          y: 2
+          z: 3
+        - x: 4
+          y: 5
+          z: 6
     GetScript: |
       @{
         Result = (Get-Date)

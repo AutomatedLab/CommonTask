@@ -1,0 +1,86 @@
+﻿// CommonTasks YAML Reference: HostsFileEntries
+// ============================================
+
+:YmlCategory: HostsFileEntries
+
+
+[[dscyml_hostsfileentries, {YmlCategory}]]
+= DSC Resource 'HostsFileEntries'
+// didn't work in production: = DSC Resource '{YmlCategory}'
+
+
+[[dscyml_hostsfileentries_abstract]]
+.{YmlCategory} is used to control entries on a the host file for a node.
+
+
+[cols="1,3a" options="autowidth" caption=]
+|===
+| Source         | https://github.com/dsccommunity/CommonTasks/tree/dev/CommonTasks/DscResources/HostsFileEntries
+| DSC Resource   | https://github.com/dsccommunity/NetworkingDsc[NetworkingDsc]
+| Documentation  | https://github.com/dsccommunity/NetworkingDsc/wiki/HostsFile[HostsFile]
+|===
+
+
+.Attributes of category '{YmlCategory}'
+[cols="1,1,1,2a,1a" options="header"]
+|===
+| Parameter
+| Attribute
+| DataType
+| Description
+| Allowed Values
+
+| [[dscyml_hostsfileentries_entries, {YmlCategory}/Entries]]<<dscyml_hostsfileentries_entries_details, Entries>>
+| 
+| hashtable[]
+| Hosts File Entries
+|
+
+|===
+
+
+[[dscyml_hostsfileentries_entries_details]]
+.Attributes of category '<<dscyml_hostsfileentries_entries>>'
+[cols="1,1,1,2a,1a" options="header"]
+|===
+| Parameter
+| Attribute
+| DataType
+| Description
+| Allowed Values
+
+| HostName
+| Key
+| String
+| Specifies the name of the computer that will be mapped to an IP address.
+|
+
+| IPAddress
+| 
+| String
+| Specifies the IP Address that should be mapped to the host name.
+|
+
+| Ensure
+|
+| String
+| Specifies if the hosts file entry should be created or deleted.
+| - *Present* (default)
+  - Absent
+
+|===
+
+
+.Example
+[source, yaml]
+----
+HostsFileEntries:
+  Entries:
+    - HostName:  server01
+      IPAddress: 192.168.0.1
+    - HostName:  server02
+      IPAddress: 192.168.0.2
+      Ensure:    Present
+    - HostName:  server03
+      Ensure:    Absent
+----

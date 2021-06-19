@@ -10,12 +10,12 @@
 
 
 [[dscyml_scheduledtasks_abstract]]
-.{YmlCategory} is used to manage SMB Server Settings, SMB shares and access permissions to SMB shares.
+.{YmlCategory} is used to define basic run once or recurring scheduled tasks on the local computer and can also be used to delete or disable built-in scheduled tasks.
 
 
 [cols="1,3a" options="autowidth" caption=]
 |===
-| Source         | \https://github.com/dsccommunity/CommonTasks/tree/dev/CommonTasks/DscResources/SmbShares
+| Source         | https://github.com/dsccommunity/CommonTasks/tree/dev/CommonTasks/DscResources/ScheduledTasks
 | DSC Resource   | https://github.com/dsccommunity/ComputerManagementDsc[ComputerManagementDsc]
 | Documentation  | https://github.com/dsccommunity/ComputerManagementDsc/wiki/ScheduledTask[ScheduledTask]
 |===

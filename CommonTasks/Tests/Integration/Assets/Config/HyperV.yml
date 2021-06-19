@@ -7,7 +7,8 @@ VMSwitches:
   - Name: VMSwitchInt  # VM Switch name
     Type: Internal
     AddressSpace: 192.168.100.0/24
-    Gateway: 192.168.100.1
+    IpAddress:    192.168.100.1
+    Gateway:      192.168.100.3
 
   - Name: VMSwitchExt  # VM Switch name
     Type: External     # Type of switch: External | Internal | Private
@@ -16,7 +17,7 @@ VMSwitches:
   - Name: VMSwitchNat  # VM Switch name
     Type: NAT          # Type of switch: External | Internal | Private | NAT
     AddressSpace: 192.168.0.0/24
-    Gateway: 192.168.0.1
+    IpAddress:    192.168.0.1
 
 VMMachines:
   - Name:           EUATESTS01  # Name of the virtual machine

@@ -1,0 +1,18 @@
+﻿Plans:
+  - GUID: SCHEME_MAX
+    Name: Power Saver
+    Description: Power Saver
+  - GUID: SCHEME_BALANCED
+    Name: Balanced
+    Active: True
+  - GUID: SCHEME_MIN
+    Name: High Performance
+Settings:
+  - PlanGuid: ALL
+    SettingGuid: STANDBYIDLE
+    AcDc: AC
+    Value: 0
+  - PlanGuid: SCHEME_MIN
+    SettingGuid: HIBERNATEIDLE
+    AcDc: AC
+    Value: 0

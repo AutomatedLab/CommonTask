@@ -68,7 +68,7 @@
                 {
                     New-Item -Path $using:rebootKeyName -Force
                 }
-                Set-ItemProperty -Path $rebootKeyName -Name $using:rebootVarName -value 1
+                Set-ItemProperty -Path $using:rebootKeyName -Name $using:rebootVarName -value 1
                 $global:DSCMachineStatus = 1             
             }
             GetScript = { return @{result = 'result'}}

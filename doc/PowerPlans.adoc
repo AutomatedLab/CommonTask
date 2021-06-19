@@ -1,0 +1,173 @@
+﻿// CommonTasks YAML Reference: PowerPlans
+// ======================================
+
+:YmlCategory: PowerPlans
+
+
+[[dscyml_powerplans, {YmlCategory}]]
+= DSC Resource 'PowerPlans'
+// didn't work in production: = DSC Resource '{YmlCategory}'
+
+
+[[dscyml_powerplans_abstract]]
+.{YmlCategory} is used to manage Power Plan configuration.
+
+
+[cols="1,3a" options="autowidth" caption=]
+|===
+| Source         | https://github.com/dsccommunity/CommonTasks/tree/dev/CommonTasks/DscResources/PowerPlans
+| DSC Resource   | https://github.com/mkht/DSCR_PowerPlan[DSCR_PowerPlan]
+| Documentation  | https://github.com/mkht/DSCR_PowerPlan#cpowerplan[cPowerPlan],
+                   https://github.com/mkht/DSCR_PowerPlan#cpowerplansettings[cPowerPlanSetting]
+|===
+
+
+.Attributes of category '{YmlCategory}'
+[cols="1,1,1,2a,1a" options="header"]
+|===
+| Parameter
+| Attribute
+| DataType
+| Description
+| Allowed Values
+
+| [[dscyml_powerplans_plans, {YmlCategory}/Plans]]<<dscyml_powerplans_plans_details, Plans>>
+| 
+| hashtable[]
+| Power Plans
+|
+
+| [[dscyml_powerplans_plans_settings, {YmlCategory}/Settings]]<<dscyml_powerplans_details, Settings>>
+| 
+| hashtable[]
+| Power Plan Settings
+|
+
+|===
+
+
+[[dscyml_powerplans_plans_details]]
+.Attributes of category '<<dscyml_powerplans_plans>>'
+[cols="1,1,1,2a,1a" options="header"]
+|===
+| Parameter
+| Attribute
+| DataType
+| Description
+| Allowed Values
+
+| GUID
+| Key
+| String
+| The GUID of Power Plan.
+
+If you want to create Original Plan, should specify unique GUID.
+If you want to set system default Plans, you can use aliases:
+
+- SCHEME_MAX
+- SCHEME_MIN
+- SCHEME_BALANCED
+|
+
+| Name
+| Mandatory
+| String
+| The Name of Power Plan.
+|
+
+| Description 
+| 
+| String
+| The Description of Power Plan.
+|
+
+| Active 
+| 
+| Boolean
+| Specifies set or unset Power Plan as Active.
+| - True
+  - False
+
+| Ensure
+|
+| String
+| Specifies existence state of Power Plan.
+| - *Present* (default)
+  - Absent
+
+|===
+
+
+[[dscyml_powerplans_settings_details]]
+.Attributes of category '<<dscyml_powerplans_settings>>'
+[cols="1,1,1,2a,1a" options="header"]
+|===
+| Parameter
+| Attribute
+| DataType
+| Description
+| Allowed Values
+
+| SettingGuid
+| Key
+| String
+| The GUID of Power Setting.
+
+You can obtain GUIDs by executing `powercfg.exe /Q` command
+You can also use some aliases obtained by executing `powercfg.exe /ALIASES` command.
+|
+
+| PlanGuid
+| Key
+| String
+| The GUID of target Power Plan.
+
+You can also use aliases:
+
+- ACTIVE
+- ALL
+- SCHEME_MAX
+- SCHEME_MIN
+- SCHEME_BALANCED
+
+If you specify the alias `ALL`, all Power Plans on the current system to be targeted.
+|
+
+| AcDc
+| Key
+| String
+| Specify whether setting is set for `AC` (plugged in), `DC` (battery) or `Both`.
+| - AC
+  - DC
+  - *Both* (default)
+
+| Value
+| Mandatory
+| UInt32
+| Specifies Power Setting value
+|
+
+|===
+
+
+.Example
+[source, yaml]
+----
+PowerPlans:
+  Plans:
+    - GUID: SCHEME_MAX
+      Name: Power Saver
+      Description: Power Saver
+    - GUID: SCHEME_BALANCED
+      Name: Balanced
+      Active: True
+  Settings:
+    - PlanGuid: ALL
+      SettingGuid: STANDBYIDLE
+      AcDc: AC
+      Value: 0
+    - PlanGuid: SCHEME_MIN
+      SettingGuid: HIBERNATEIDLE
+      AcDc: AC
+      Value: 0
+----

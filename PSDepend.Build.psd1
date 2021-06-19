@@ -49,4 +49,5 @@
     xBitlocker                   = '1.4.0.0'
     ActiveDirectoryCSDsc         = '5.0.0'
     'xHyper-V'                   = '3.17.0.0'
+    DSCR_PowerPlan               = '1.3.0'
 }
